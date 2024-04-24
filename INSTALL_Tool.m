@@ -48,10 +48,10 @@ function RequiredWebZips
     zips(ind).test = 'commonFigureProperties';
 
     % zip: DTQP
-    ind = ind + 1; % increment
-    zips(ind).url = 'https://github.com/danielrherber/dt-qp-project/archive/refs/heads/master.zip';
-    zips(ind).folder = 'MFX 8773';
-    zips(ind).test = 'dt-qp-project';
+    % ind = ind + 1; % increment
+    % zips(ind).url = 'https://github.com/danielrherber/dt-qp-project/archive/refs/heads/master.zip';
+    % zips(ind).folder = 'MFX 8773';
+    % zips(ind).test = 'dt-qp-project';
 
     % obtain full function path
     full_fun_path = which(mfilename('fullpath'));

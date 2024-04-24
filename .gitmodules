@@ -1,0 +1,3 @@
+[submodule "dt-qp-project"]
+	path = dt-qp-project
+	url = https://github.com/danielrherber/dt-qp-project.git
