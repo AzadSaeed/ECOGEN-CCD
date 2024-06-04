@@ -10,6 +10,7 @@ switch upper(TimeFlag)
         % Create Base daily Profile
         t_ = 0:23;
         c_base = 7*ones(1,length(t_));
+        % c_base = 10*ones(1,length(t_));
 
         % Repeat the base for all days
         t = 0:1:(t_Length-1);

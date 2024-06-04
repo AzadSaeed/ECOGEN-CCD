@@ -50,6 +50,12 @@ if isfield(auxdata.IDX,'Storage') && isfield(auxdata.IDX.Storage,'Tertiary')
     Z = Path_DiscreteMarketDemand(Z,auxdata,Opts);
 end
 
+
+% Load following constraint
+if auxdata.Demand_cons
+    Z = Path_DemandFollowing(Z,auxdata,Opts);
+end
+
 end
 
 %-------------------------------------------------------------------------%

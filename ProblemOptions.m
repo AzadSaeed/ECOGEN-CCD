@@ -24,8 +24,8 @@ end
 
 % Set the time duration 
 auxdata.General.NumHours = 0;  % 0 <= NumHours <= 24
-auxdata.General.NumDays  = 2;  % 0 <= NumDays <= 365.25 (# days in a Julian day)
-auxdata.General.NumYears = 0;  % 
+auxdata.General.NumDays  = 0;  % 0 <= NumDays <= 365.25 (# days in a Julian day)
+auxdata.General.NumYears = 30;  % 
 
 % Set the time flag (only hourly works with existing price signals)
 auxdata.General.TimeFlag = 'Hour';
@@ -90,6 +90,27 @@ if isfield(auxdata.IDX,'Storage') && isfield(auxdata.IDX.Storage,'Tertiary')
     F_fnc = DMD(auxdata);
     auxdata.Storage.DMD = F_fnc;
 end
+
+% Define the demand-following constraints
+auxdata.Demand_cons = 0; 
+
+if auxdata.Demand_cons
+
+    % Demand following starts every day at Demand_hours_min (3:00 pmn)
+    auxdata.Generator.Demand_hours_min = 16; 
+
+    % Demand following ends every day at Demand_hours_max (7:00 pm)
+    auxdata.Generator.Demand_hours_max = 19;
+
+    % Demand level
+    auxdata.Generator.Demand_level = Gen_aux.x_Gmax-1;
+
+    % Construct the demand trajectory
+    F_demand_fnc = Demand_Following_traj(auxdata);
+    auxdata.Generator.F_demand_fnc = F_demand_fnc;
+
+end
+
 
 end
 
@@ -266,7 +287,7 @@ T_sell = 9;
 % number of days
 num_days = 30*365.25;
 
-for i = 0:num_days
+for i = 0:num_days-1
 
     t_idx = i*(24) + T_sell;
     Fval(1,t_idx) = 1;
@@ -277,6 +298,63 @@ end
 Fval = Fval.*auxdata.Storage.u3_Smax;
 F_int = griddedInterpolant(t_all,Fval,'previous');
 F_fnc = @(t)F_int(t);
+
+
+end
+
+
+%-------------------------------------------------------------------------%
+%-------------------------------------------------------------------------%
+%-------------------------------------------------------------------------%
+function F_demand_fnc = Demand_Following_traj(auxdata)
+
+% Create upper bound for 30 years of hourly mesh
+t_all = 0:30*365.25*24;
+
+
+% Initialize path constraint bounds
+Limit_min  = zeros(size(t_all));
+
+
+% Sales occur every day at T_sell-1 to T_sell
+T_min = auxdata.Generator.Demand_hours_min;
+T_max = auxdata.Generator.Demand_hours_max;
+
+% number of days
+num_days = 30*365.25;
+
+for i = 0:num_days-1
+
+    t_idx0 = i*(24) + T_min;
+    t_idxf = i*(24) + T_max;
+    t_idx  = t_idx0:t_idxf;
+    Limit_min(1,t_idx) = 1;
+
+end
+
+Limit_min = auxdata.Generator.Demand_level*Limit_min;
+
+
+Limit_min_int = griddedInterpolant(t_all,Limit_min,'previous');
+Limit_min_fnc = @(t)Limit_min_int(t);
+F_demand_fnc.Limit_min_fnc  = Limit_min_fnc;
+
+
+% Construct charging max path
+max_charge = auxdata.Storage.u1_Smax*ones(size(t_all));
+
+for i = 0:num_days-1
+
+    t_idx0 = i*(24) + T_min;
+    t_idxf = i*(24) + T_max;
+    t_idx  = t_idx0:t_idxf;
+    max_charge(1,t_idx) = 0;
+
+end
+
+max_charge_int = griddedInterpolant(t_all,max_charge,'previous');
+max_charge_fnc = @(t)max_charge_int(t);
+F_demand_fnc.max_charge_fnc  = max_charge_fnc;
 
 
 end
